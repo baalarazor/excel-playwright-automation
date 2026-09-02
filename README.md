@@ -1,6 +1,6 @@
 # Excel Online `TODAY()` test
 
-This TypeScript + Playwright project verifies that Excel Online stores `=TODAY()` in A2 and displays today's date in a configured timezone.
+This TypeScript + Playwright project verifies that Excel Online workbook stores `=TODAY()` in A2 and displays today's date in a configured timezone.
 
 ## Setup
 
