@@ -20,6 +20,10 @@ test.describe('Excel Online TODAY()', () => {
       await workbook.open(config.workbookUrl);
     });
 
+    await test.step(`Clear ${config.targetCell} before the test`, async () => {
+      await workbook.clearCell(config.targetCell);
+    });
+
     try {
       const startedAt = new Date();
       await test.step(`Execute =TODAY() in ${config.targetCell}`, async () => {

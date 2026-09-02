@@ -49,31 +49,22 @@ export class ExcelWorkbookPage {
     const grid = await this.attachedLocator(this.gridCandidates());
     await grid.focus();
     await grid.press('Delete');
+    await this.selectCell(cellReference);
+    await expect.poll(() => this.readSelectedCellFormula(), {
+      message: `Excel did not clear ${cellReference}`,
+    }).toBe('');
   }
 
   private async selectCell(cellReference: string): Promise<void> {
     await this.dismissBlockingDialog();
+    await this.page.keyboard.press('Escape');
     const nameBox = await this.visibleLocator(this.nameBoxCandidates());
     await nameBox.click();
-    await nameBox.press('ControlOrMeta+A');
-    await nameBox.pressSequentially(cellReference, { delay: 50 });
+    await nameBox.fill(cellReference);
     await nameBox.press('Enter');
-    await expect
-      .poll(
-        async () => {
-          const labels = await this.scope
-            .locator('[role="textbox"][aria-label]')
-            .evaluateAll((elements) => elements.map((element) => element.getAttribute('aria-label')));
-          return labels.some(
-            (label) =>
-              label !== null &&
-              labelContainsCellReference(label, cellReference) &&
-              /\bselected\b/i.test(label),
-          );
-        },
-        { message: `Excel did not select ${cellReference}` },
-      )
-      .toBe(true);
+    await expect(nameBox, `Excel did not select ${cellReference}`).toHaveValue(
+      new RegExp(`^${escapeRegex(cellReference)}$`, 'i'),
+    );
   }
 
   private async dismissBlockingDialog(): Promise<void> {
@@ -200,10 +191,4 @@ export function extractCellValueFromAccessibleLabel(
 
   // Excel's readout is normally "value . A2 . metadata"; blank cells start at "A2".
   return cellIndex > 0 ? (segments[cellIndex - 1] ?? '') : '';
-}
-
-function labelContainsCellReference(label: string, cellReference: string): boolean {
-  return label
-    .split(/\s+\.\s+/)
-    .some((segment) => segment.trim().toUpperCase() === cellReference.toUpperCase());
 }
