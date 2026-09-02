@@ -29,6 +29,7 @@ export class ExcelWorkbookPage {
   public async readSelectedCellValue(cellReference: string): Promise<string> {
     const accessibleValue = await this.readAccessibleCellValue(cellReference);
     if (accessibleValue) return accessibleValue;
+
     throw new Error(`Excel did not expose ${cellReference}'s displayed value through accessibility.`);
   }
 
@@ -149,28 +150,33 @@ export class ExcelWorkbookPage {
     timeout = 10_000,
     errorMessage = 'Expected Excel control was not visible.',
   ): Promise<Locator> {
-    try {
-      return await Promise.any(
-        candidates.map(async (candidate) => {
-          await candidate.waitFor({ state: 'visible', timeout });
-          return candidate;
-        }),
-      );
-    } catch {
-      throw new Error(`${errorMessage} URL: ${this.page.url()}`);
-    }
+    return this.findLocator(candidates, 'visible', timeout, `${errorMessage} URL: ${this.page.url()}`);
   }
 
   private async attachedLocator(candidates: readonly Locator[]): Promise<Locator> {
+    return this.findLocator(
+      candidates,
+      'attached',
+      10_000,
+      `Excel keyboard editor was not attached. URL: ${this.page.url()}`,
+    );
+  }
+
+  private async findLocator(
+    candidates: readonly Locator[],
+    state: 'attached' | 'visible',
+    timeout: number,
+    errorMessage: string,
+  ): Promise<Locator> {
     try {
       return await Promise.any(
         candidates.map(async (candidate) => {
-          await candidate.waitFor({ state: 'attached', timeout: 10_000 });
+          await candidate.waitFor({ state, timeout });
           return candidate;
         }),
       );
     } catch {
-      throw new Error(`Excel keyboard editor was not attached. URL: ${this.page.url()}`);
+      throw new Error(errorMessage);
     }
   }
 }

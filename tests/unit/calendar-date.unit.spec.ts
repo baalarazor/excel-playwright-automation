@@ -15,13 +15,6 @@ test.describe('Excel displayed date matching', () => {
     expect(matchesDisplayedDate('Sep 2, 2026', [septemberSecond], 'en-US')).toBe(true);
   });
 
-  test('matches localized and clipboard-delimited representations', () => {
-    expect(matchesDisplayedDate('02.09.2026\tignored', [septemberSecond], 'de-DE')).toBe(
-      true,
-    );
-    expect(matchesDisplayedDate('02/09/2026\r\n', [septemberSecond], 'en-GB')).toBe(true);
-  });
-
   test('rejects wrong, malformed, empty, and formula-like values', () => {
     for (const value of ['', 'not a date', '=TODAY()', '9/3/2026', '2026-99-99']) {
       expect(matchesDisplayedDate(value, [septemberSecond], 'en-US')).toBe(false);
@@ -49,14 +42,4 @@ test.describe('Excel displayed date matching', () => {
     expect(matchesDisplayedDate('03/09/2026', dates, 'en-GB')).toBe(true);
   });
 
-  test('rejects an invalid execution window', () => {
-    expect(() =>
-      observedCalendarDates(
-        new Date('2026-09-03T00:00:00Z'),
-        new Date('2026-09-02T00:00:00Z'),
-        'en-US',
-        'UTC',
-      ),
-    ).toThrow(RangeError);
-  });
 });

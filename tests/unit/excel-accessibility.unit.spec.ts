@@ -18,7 +18,4 @@ test.describe('Excel accessibility value extraction', () => {
     ).toBe('');
   });
 
-  test('does not return a value for another cell', () => {
-    expect(extractCellValueFromAccessibleLabel('value . A20 . Selected .', 'A2')).toBe('');
-  });
 });

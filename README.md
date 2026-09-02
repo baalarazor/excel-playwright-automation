@@ -1,56 +1,44 @@
-# Excel Online `TODAY()` E2E test
+# Excel Online `TODAY()` test
 
-A TypeScript + Playwright test that opens an editable workbook in stable Google Chrome, signs in to Microsoft, executes `=TODAY()` in `A2`, and verifies the result is the current date.
-
-## Prerequisites
-
-- Node.js 20+
-- Google Chrome
-- A dedicated editable workbook URL in OneDrive or SharePoint
-- For private workbooks only: a Microsoft automation account without an interactive MFA requirement
+This TypeScript + Playwright project verifies that Excel Online stores `=TODAY()` in A2 and displays today's date in a configured timezone.
 
 ## Setup
+
+Requirements: Node.js 20+, Google Chrome, and an editable Excel Online workbook.
 
 ```bash
 npm ci
 cp config/test.env.example config/test.env
 ```
 
-Edit `config/test.env`. Public editable links need no username or password. For private workbooks, add the Microsoft credentials shown in the example. Real credentials, cached authenticated sessions, videos, traces, and reports are ignored by Git.
+Set `EXCEL_WORKBOOK_URL` in `config/test.env`. Public editable links can leave `MS_USERNAME` and `MS_PASSWORD` empty. Private workbooks need an account that can sign in without an interactive MFA challenge. The local config and saved Playwright session are ignored by Git.
 
 ## Run
 
 ```bash
-npm run check       # typecheck, lint, and fast unit/negative tests
-npm run test:api    # configured endpoint availability/performance contract
-npm run test:e2e    # authenticated Chrome E2E test
-npm run test:demo   # headed run with video recording
-npm run report      # inspect the HTML report
+npm run check       # typecheck, lint, and fast unit tests
+npm run test:api    # workbook endpoint availability
+npm run test:e2e    # Chrome UI test
+npm run test:demo   # visible Chrome run with video
+npm run report      # open the HTML report
 ```
 
-The first E2E run logs in and writes `playwright/.auth/user.json`. Delete that file to force a new login. If MFA is mandatory, create the authenticated state interactively with Playwright UI mode or use a policy-approved automation account; never commit the state file.
+## What the E2E test does
 
-## Evidence and cleanup
+1. Opens the configured workbook in Chrome.
+2. Clears A2 and confirms the cell is empty.
+3. Enters `=TODAY()` and verifies the formula bar.
+4. Reads A2's displayed value from Excel's accessibility label.
+5. Compares it with today's date in the configured locale and timezone, allowing a midnight boundary.
+6. Clears A2 again in `finally`.
 
-Failures retain a trace, screenshot, and video under `test-results/`. Demo mode records successful execution too. The test reads the selected cell's accessibility value first and uses the browser clipboard only as a fallback. It attaches the actual formula, displayed value, expected ISO date, locale, and time zone to the report, then clears `A2` in a `finally` block.
+Excel's canvas grid is not a stable DOM source. The test therefore uses the selected cell's accessibility label; if that label is unavailable, the test fails with an actionable error rather than relying on clipboard or coordinates.
 
-See [requirements and test strategy](docs/REQUIREMENTS.md) and [demo/narration guide](docs/DEMO.md) for architecture decisions, risks, limitations, workarounds, and alternative solutions.
+## Design notes
 
-A successful headed run against the public review workbook is included as [the demo recording](docs/demo/today-e2e-demo.webm).
+- The Name Box provides deterministic A2 navigation without grid coordinates.
+- The Excel page object keeps the UI selectors in one place.
+- Locale and timezone are explicit, so the expected date does not depend on the machine location.
+- A2 is shared state; do not run this test concurrently against the same workbook.
 
-The implementation follows Playwright's official guidance for [reusable authentication state](https://playwright.dev/docs/auth), [stable Chrome channels](https://playwright.dev/docs/browsers#google-chrome--microsoft-edge), and [failure evidence](https://playwright.dev/docs/test-use-options#recording-options). The expected function behavior comes from Microsoft's [`TODAY()` reference](https://support.microsoft.com/en-us/office/today-function-5eb3078d-a82c-4736-8930-2f51a028fdd9).
-
-## GitHub
-
-Initialize and publish after substituting your repository URL:
-
-```bash
-git init
-git add .
-git commit -m "Add Excel Online TODAY Playwright test"
-git branch -M main
-git remote add origin https://github.com/<owner>/<repository>.git
-git push -u origin main
-```
-
-Add `MS_USERNAME`, `MS_PASSWORD`, and `EXCEL_WORKBOOK_URL` as GitHub Actions secrets. Quality checks run on pushes and pull requests; the external E2E job is intentionally manual to protect the shared account and workbook.
+Failures retain a screenshot, trace, video, and date-verification attachment under `test-results/`.
