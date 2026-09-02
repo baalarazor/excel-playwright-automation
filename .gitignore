@@ -1,0 +1,15 @@
+# Installed dependencies
+node_modules/
+
+# Private test configuration and authenticated browser state
+config/test.env
+playwright/.auth/
+
+# Generated Playwright artifacts
+playwright-report/
+test-results/
+blob-report/
+
+# Local editor and operating-system files
+.DS_Store
+.vscode/

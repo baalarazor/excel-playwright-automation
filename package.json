@@ -1,0 +1,30 @@
+{
+  "name": "excel-playwright-automation",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Production-minded Playwright E2E coverage for Excel Online's TODAY() function",
+  "scripts": {
+    "test": "playwright test --project=unit",
+    "test:api": "playwright test --project=api",
+    "test:e2e": "playwright test --project=chrome",
+    "test:all": "playwright test",
+    "test:demo": "DEMO=true playwright test --project=chrome --headed --workers=1",
+    "test:ui": "playwright test --ui",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint .",
+    "check": "npm run typecheck && npm run lint && npm test",
+    "report": "playwright show-report"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "devDependencies": {
+    "@eslint/js": "10.0.1",
+    "@playwright/test": "1.62.1",
+    "@types/node": "^24.3.0",
+    "dotenv": "^17.2.2",
+    "eslint": "10.9.1",
+    "typescript": "5.9.3",
+    "typescript-eslint": "8.69.0"
+  }
+}
