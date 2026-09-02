@@ -6,8 +6,8 @@ A TypeScript + Playwright test that opens an editable workbook in stable Google 
 
 - Node.js 20+
 - Google Chrome
-- A dedicated Microsoft automation account without an interactive MFA requirement
 - A dedicated editable workbook URL in OneDrive or SharePoint
+- For private workbooks only: a Microsoft automation account without an interactive MFA requirement
 
 ## Setup
 
@@ -16,7 +16,7 @@ npm ci
 cp config/test.env.example config/test.env
 ```
 
-Edit `config/test.env`. Real credentials, the cached authenticated session, videos, traces, and reports are ignored by Git.
+Edit `config/test.env`. Public editable links need no username or password. For private workbooks, add the Microsoft credentials shown in the example. Real credentials, cached authenticated sessions, videos, traces, and reports are ignored by Git.
 
 ## Run
 
@@ -32,9 +32,11 @@ The first E2E run logs in and writes `playwright/.auth/user.json`. Delete that f
 
 ## Evidence and cleanup
 
-Failures retain a trace, screenshot, and video under `test-results/`. Demo mode records successful execution too. The test attaches the actual formula, displayed value, expected ISO date, locale, and time zone to the report. It clears `A2` in a `finally` block.
+Failures retain a trace, screenshot, and video under `test-results/`. Demo mode records successful execution too. The test reads the selected cell's accessibility value first and uses the browser clipboard only as a fallback. It attaches the actual formula, displayed value, expected ISO date, locale, and time zone to the report, then clears `A2` in a `finally` block.
 
 See [requirements and test strategy](docs/REQUIREMENTS.md) and [demo/narration guide](docs/DEMO.md) for architecture decisions, risks, limitations, workarounds, and alternative solutions.
+
+A successful headed run against the public review workbook is included as [the demo recording](docs/demo/today-e2e-demo.webm).
 
 The implementation follows Playwright's official guidance for [reusable authentication state](https://playwright.dev/docs/auth), [stable Chrome channels](https://playwright.dev/docs/browsers#google-chrome--microsoft-edge), and [failure evidence](https://playwright.dev/docs/test-use-options#recording-options). The expected function behavior comes from Microsoft's [`TODAY()` reference](https://support.microsoft.com/en-us/office/today-function-5eb3078d-a82c-4736-8930-2f51a028fdd9).
 

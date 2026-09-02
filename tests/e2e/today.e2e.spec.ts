@@ -23,8 +23,9 @@ test.describe('Excel Online TODAY()', () => {
     try {
       const startedAt = new Date();
       await test.step(`Execute =TODAY() in ${config.targetCell}`, async () => {
-        await workbook.enterFormula(config.targetCell, '=TODAY()');
+        // Cleanup owns the cell before mutation begins, including partial UI failures.
         cellWasChanged = true;
+        await workbook.enterFormula(config.targetCell, '=TODAY()');
       });
 
       const formula = await test.step('Verify the entered formula', async () =>
@@ -33,7 +34,7 @@ test.describe('Excel Online TODAY()', () => {
       expect(formula.replace(/\s/g, '').toUpperCase()).toBe('=TODAY()');
 
       const displayedValue = await test.step('Read the calculated cell value', async () =>
-        workbook.readSelectedCellValue(),
+        workbook.readSelectedCellValue(config.targetCell),
       );
       const finishedAt = new Date();
       const expectedDates = observedCalendarDates(

@@ -1,5 +1,7 @@
 # Demo and verbal walkthrough
 
+The repository includes a successful run at [`docs/demo/today-e2e-demo.webm`](demo/today-e2e-demo.webm). It uses the public workbook, enters and validates `=TODAY()` in A2, and clears the cell afterward.
+
 ## Record the demo
 
 1. Complete `config/test.env` using the example file.

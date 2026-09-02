@@ -9,7 +9,7 @@ Ready for review after one environment-dependent proof: a successful run against
 - The acceptance scenario reads as business behavior and contains no login or selector detail.
 - Configuration, date-domain logic, login workflow, and workbook UI are independently owned components.
 - Stable Chrome is explicit (`channel: chrome`), not implied by Playwright's bundled Chromium.
-- Assertions prove both inputs and outputs: exact formula plus calculated current date.
+- Assertions prove both inputs and outputs: exact formula plus calculated current date, read through Excel's accessibility surface with a clipboard fallback.
 - Locale, time zone, midnight crossover, malformed values, Excel grid limits, URL validation, response time, cleanup, and diagnostic evidence are addressed.
 - Credentials and authenticated browser state are excluded from Git and auth is excluded from recordings/traces.
 - CI serialization acknowledges that a workbook cell is shared mutable state.

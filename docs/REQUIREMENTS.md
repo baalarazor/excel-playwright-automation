@@ -31,6 +31,8 @@ This is intentionally a small Page Object + fixture architecture. Adding a depen
 | Locale ambiguity | Browser locale is explicit; compare only locale-produced representations. |
 | Hostile workbook URL steals credentials | HTTPS plus Microsoft-owned host allowlist before login. |
 | Credentials leak into Git/artifacts | Ignored config/auth files; recording disabled during authentication. |
+| Anonymous OneDrive editor is iframe-hosted | Discover the workbook scope at runtime; support top-level and embedded Excel variants. |
+| Browser clipboard is blocked in an iframe | Read Excel's selected-cell accessibility value first; retain clipboard as a fallback. |
 | Slow Microsoft UI/network | Bounded navigation/action/workbook waits; diagnostics retained on failure. |
 | Shared workbook races | One CI worker and workflow concurrency; dedicated workbook required. |
 | MFA/CAPTCHA/account challenge | Fail fast with an actionable test-account/session-state message. |
@@ -41,5 +43,5 @@ This is intentionally a small Page Object + fixture architecture. Adding a depen
 
 - Cross-repository or developer-to-CI concurrency cannot be locked through Playwright; use a dedicated workbook/account per execution lane.
 - Microsoft can change its internal Excel DOM. Semantic ARIA selectors are preferred, with narrowly scoped fallbacks for the canvas-based editor.
-- Automated username/password login is incompatible with many MFA and Conditional Access policies. A purpose-built test account or pre-created storage state is required.
+- Automated username/password login is incompatible with many MFA and Conditional Access policies. Private workbooks need a purpose-built test account or pre-created storage state; public editable links need neither.
 - This validates Excel Online end to end. Microsoft Graph or Office Scripts would be faster alternatives, but they would not satisfy the browser/UI requirement.
