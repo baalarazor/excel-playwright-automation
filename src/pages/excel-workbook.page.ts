@@ -29,30 +29,7 @@ export class ExcelWorkbookPage {
   public async readSelectedCellValue(cellReference: string): Promise<string> {
     const accessibleValue = await this.readAccessibleCellValue(cellReference);
     if (accessibleValue) return accessibleValue;
-
-    await this.page.keyboard.press('ControlOrMeta+C');
-
-    const value = await expect
-      .poll(
-        async () =>
-          this.scope.evaluate(async () => {
-            try {
-              return (await navigator.clipboard.readText()).trim();
-            } catch {
-              return '';
-            }
-          }),
-        {
-          message: 'Excel did not expose the selected cell value through the clipboard',
-          timeout: 10_000,
-        },
-      )
-      .not.toBe('')
-      .then(async () =>
-        this.scope.evaluate(async () => (await navigator.clipboard.readText()).trim()),
-      );
-
-    return value;
+    throw new Error(`Excel did not expose ${cellReference}'s displayed value through accessibility.`);
   }
 
   public async readSelectedCellFormula(): Promise<string> {
