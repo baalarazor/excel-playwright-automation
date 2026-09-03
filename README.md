@@ -11,13 +11,12 @@ npm ci
 cp config/test.env.example config/test.env
 ```
 
-Set `EXCEL_WORKBOOK_URL` in `config/test.env`. Public editable links can leave `MS_USERNAME` and `MS_PASSWORD` empty. Private workbooks need an account that can sign in without an interactive MFA challenge. The local config and saved Playwright session are ignored by Git.
+Set `EXCEL_WORKBOOK_URL` in `config/test.env`. The workbook must be publicly editable; this project deliberately has no Microsoft sign-in flow.
 
 ## Run
 
 ```bash
 npm run check       # typecheck, lint, and fast unit tests
-npm run test:api    # workbook endpoint availability
 npm run test:e2e    # Chrome UI test
 npm run test:demo   # visible Chrome run with video
 npm run report      # open the HTML report
@@ -30,7 +29,8 @@ npm run report      # open the HTML report
 3. Enters `=TODAY()` and verifies the formula bar.
 4. Reads A2's displayed value from Excel's accessibility label.
 5. Compares it with today's date in the configured locale and timezone, allowing a midnight boundary.
-6. Clears A2 again in `finally`.
+6. In a separate `en-US` test, applies Excel's built-in **Short Date** number format, verifies Excel's toolbar changed to the `Date` category, and verifies the `M/D/YYYY` display. It is skipped for other locales because date order is locale-specific.
+7. Clears A2 again in `finally`.
 
 Excel's canvas grid is not a stable DOM source. The test therefore uses the selected cell's accessibility label; if that label is unavailable, the test fails with an actionable error rather than relying on clipboard or coordinates.
 

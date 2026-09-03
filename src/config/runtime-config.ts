@@ -4,14 +4,10 @@ import dotenv from 'dotenv';
 
 export interface RuntimeConfig {
   readonly actionTimeoutMs: number;
-  readonly apiResponseBudgetMs: number;
   readonly locale: string;
   readonly navigationTimeoutMs: number;
-  readonly password: string | undefined;
-  readonly staySignedIn: boolean;
   readonly targetCell: string;
   readonly timeZone: string;
-  readonly username: string | undefined;
   readonly workbookTimeoutMs: number;
   readonly workbookUrl: string;
 }
@@ -54,13 +50,6 @@ export function readRuntimeConfig(
 
   return {
     actionTimeoutMs: boundedInteger(environment, 'ACTION_TIMEOUT_MS', 15_000, 1_000, 120_000),
-    apiResponseBudgetMs: boundedInteger(
-      environment,
-      'API_RESPONSE_BUDGET_MS',
-      15_000,
-      1_000,
-      120_000,
-    ),
     locale,
     navigationTimeoutMs: boundedInteger(
       environment,
@@ -69,11 +58,8 @@ export function readRuntimeConfig(
       5_000,
       180_000,
     ),
-    password: optionalSecret(environment.MS_PASSWORD),
-    staySignedIn: parseBoolean(environment.MS_STAY_SIGNED_IN, false),
     targetCell,
     timeZone,
-    username: optionalSecret(environment.MS_USERNAME),
     workbookTimeoutMs: boundedInteger(
       environment,
       'WORKBOOK_TIMEOUT_MS',
@@ -83,19 +69,6 @@ export function readRuntimeConfig(
     ),
     workbookUrl,
   };
-}
-
-export function requireCredentials(config: RuntimeConfig): {
-  username: string;
-  password: string;
-} {
-  if (!config.username || !config.password) {
-    throw new ConfigurationError(
-      'MS_USERNAME and MS_PASSWORD are required when no reusable authenticated session exists.',
-    );
-  }
-
-  return { username: config.username, password: config.password };
 }
 
 export class ConfigurationError extends Error {
@@ -111,12 +84,6 @@ function required(environment: NodeJS.ProcessEnv, name: string): string {
     throw new ConfigurationError(`${name} is required. See config/test.env.example.`);
   }
   return value;
-}
-
-function optionalSecret(value: string | undefined): string | undefined {
-  const normalized = value?.trim();
-  if (!normalized || normalized === 'replace-me') return undefined;
-  return normalized;
 }
 
 function validateWorkbookUrl(value: string): void {
@@ -165,13 +132,6 @@ function boundedInteger(
     throw new ConfigurationError(`${name} must be an integer from ${minimum} to ${maximum}.`);
   }
   return value;
-}
-
-function parseBoolean(value: string | undefined, fallback: boolean): boolean {
-  if (value === undefined || value.trim() === '') return fallback;
-  if (value.toLowerCase() === 'true') return true;
-  if (value.toLowerCase() === 'false') return false;
-  throw new ConfigurationError('MS_STAY_SIGNED_IN must be true or false.');
 }
 
 function isExcelCellReference(value: string): boolean {

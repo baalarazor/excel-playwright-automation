@@ -5,7 +5,6 @@
   "description": "Production-minded Playwright E2E coverage for Excel Online's TODAY() function",
   "scripts": {
     "test": "playwright test --project=unit",
-    "test:api": "playwright test --project=api",
     "test:e2e": "playwright test --project=chrome",
     "test:all": "playwright test",
     "test:demo": "DEMO=true playwright test --project=chrome --headed --workers=1",

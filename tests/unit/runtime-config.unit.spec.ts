@@ -3,7 +3,6 @@ import { expect, test } from '@playwright/test';
 import {
   ConfigurationError,
   readRuntimeConfig,
-  requireCredentials,
 } from '../../src/config/runtime-config';
 
 const validEnvironment = (): NodeJS.ProcessEnv => ({
@@ -26,26 +25,4 @@ test.describe('runtime configuration', () => {
     );
   });
 
-  test('does not accept placeholder or missing credentials', () => {
-    const config = readRuntimeConfig({
-      ...validEnvironment(),
-      MS_PASSWORD: 'replace-me',
-      MS_USERNAME: '',
-    });
-
-    expect(() => requireCredentials(config)).toThrow(/required/);
-  });
-
-  test('returns credentials without logging or transforming them', () => {
-    const config = readRuntimeConfig({
-      ...validEnvironment(),
-      MS_PASSWORD: ' secret ',
-      MS_USERNAME: ' qa@example.com ',
-    });
-
-    expect(requireCredentials(config)).toEqual({
-      password: 'secret',
-      username: 'qa@example.com',
-    });
-  });
 });

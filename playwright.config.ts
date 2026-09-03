@@ -1,5 +1,3 @@
-import path from 'node:path';
-
 import { defineConfig, devices } from '@playwright/test';
 
 import { loadEnvironmentFile } from './src/config/runtime-config';
@@ -7,8 +5,6 @@ import { loadEnvironmentFile } from './src/config/runtime-config';
 loadEnvironmentFile();
 
 const demoMode = process.env.DEMO === 'true';
-const authFile = path.resolve('playwright/.auth/user.json');
-
 export default defineConfig({
   expect: { timeout: 10_000 },
   forbidOnly: Boolean(process.env.CI),
@@ -30,22 +26,6 @@ export default defineConfig({
       testMatch: /.*\.unit\.spec\.ts/,
     },
     {
-      name: 'api',
-      testMatch: /.*\.api\.spec\.ts/,
-    },
-    {
-      name: 'auth',
-      testMatch: /.*\.setup\.ts/,
-      use: {
-        ...devices['Desktop Chrome'],
-        channel: 'chrome',
-        screenshot: 'off',
-        trace: 'off',
-        video: 'off',
-      },
-    },
-    {
-      dependencies: ['auth'],
       name: 'chrome',
       testMatch: /.*\.e2e\.spec\.ts/,
       use: {
@@ -54,7 +34,6 @@ export default defineConfig({
         headless: !demoMode,
         locale: process.env.EXCEL_LOCALE ?? 'en-US',
         permissions: ['clipboard-read', 'clipboard-write'],
-        storageState: authFile,
         timezoneId: process.env.EXCEL_TIME_ZONE ?? 'UTC',
         video: demoMode ? 'on' : 'retain-on-failure',
       },

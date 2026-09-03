@@ -56,6 +56,30 @@ export class ExcelWorkbookPage {
     }).toBe('');
   }
 
+  public async setNumberFormat(cellReference: string, formatName: string): Promise<void> {
+    await this.selectCell(cellReference);
+    const numberFormat = await this.visibleLocator([
+      this.scope.getByRole('button', { name: /number format/i }).first(),
+      this.scope.locator('button[aria-label*="number format" i]').first(),
+    ]);
+    await numberFormat.click();
+
+    const format = this.scope.getByRole('option', { name: new RegExp(`^${escapeRegex(formatName)}$`, 'i') }).first();
+    await expect(format, `Excel did not offer the ${formatName} number format`).toBeVisible();
+    await format.click();
+    await this.selectCell(cellReference);
+  }
+
+  public async readNumberFormat(): Promise<string> {
+    const numberFormat = await this.visibleLocator([
+      this.scope.getByRole('combobox', { name: /number format/i }).first(),
+    ]);
+    return numberFormat.evaluate((element) => {
+      if (element instanceof HTMLInputElement) return element.value.trim();
+      return (element.textContent ?? '').trim();
+    });
+  }
+
   private async selectCell(cellReference: string): Promise<void> {
     await this.dismissBlockingDialog();
     await this.page.keyboard.press('Escape');

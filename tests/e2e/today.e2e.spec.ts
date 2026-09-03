@@ -11,6 +11,8 @@ import { ExcelWorkbookPage } from '../../src/pages/excel-workbook.page';
 loadEnvironmentFile();
 
 test.describe('Excel Online TODAY()', () => {
+  test.describe.configure({ mode: 'serial' });
+
   test('returns the current date in A2', async ({ page }, testInfo) => {
     const config = readRuntimeConfig();
     const workbook = new ExcelWorkbookPage(page, config.workbookTimeoutMs);
@@ -71,6 +73,48 @@ test.describe('Excel Online TODAY()', () => {
     } finally {
       if (cellWasChanged) {
         await workbook.clearCell(config.targetCell).catch(() => undefined);
+      }
+    }
+  });
+
+  test('displays TODAY() using Excel\'s Short Date number format', async ({ page }) => {
+    const config = readRuntimeConfig();
+    test.skip(config.locale !== 'en-US', 'This display-pattern assertion is specific to en-US.');
+    const workbook = new ExcelWorkbookPage(page, config.workbookTimeoutMs);
+    let cellWasChanged = false;
+
+    await workbook.open(config.workbookUrl);
+    await workbook.clearCell(config.targetCell);
+    await workbook.setNumberFormat(config.targetCell, 'General');
+
+    try {
+      const startedAt = new Date();
+      cellWasChanged = true;
+      await workbook.enterFormula(config.targetCell, '=TODAY()');
+      await workbook.setNumberFormat(config.targetCell, 'Short Date');
+
+      const displayedValue = await workbook.readSelectedCellValue(config.targetCell);
+      expect(await workbook.readNumberFormat(), 'Excel should apply the Date format category').toBe(
+        'Date',
+      );
+      const expectedDates = observedCalendarDates(
+        startedAt,
+        new Date(),
+        config.locale,
+        config.timeZone,
+      );
+
+      expect(
+        matchesDisplayedDate(displayedValue, expectedDates, config.locale),
+        `Expected ${config.targetCell} value "${displayedValue}" to represent today's date`,
+      ).toBe(true);
+      expect(displayedValue, 'Excel Short Date should use the M/D/YYYY pattern').toMatch(
+        /^\d{1,2}\/\d{1,2}\/\d{4}$/,
+      );
+    } finally {
+      if (cellWasChanged) {
+        await workbook.clearCell(config.targetCell).catch(() => undefined);
+        await workbook.setNumberFormat(config.targetCell, 'General').catch(() => undefined);
       }
     }
   });
