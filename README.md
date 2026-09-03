@@ -29,7 +29,7 @@ npm run report      # open the HTML report
 3. Enters `=TODAY()` and verifies the formula bar.
 4. Reads A2's displayed value from Excel's accessibility label.
 5. Compares it with today's date in the configured locale and timezone, allowing a midnight boundary.
-6. In a separate `en-US` test, applies Excel's built-in **Short Date** number format, verifies Excel's toolbar changed to the `Date` category, and verifies the `M/D/YYYY` display. It is skipped for other locales because date order is locale-specific.
+6. In separate format tests, opens **More Number Formats** to verify the built-in `yyyy-mm-dd` format and the custom `d mmm yyyy` format (`3 Sep 2026`).
 7. Clears A2 again in `finally`.
 
 Excel's canvas grid is not a stable DOM source. The test therefore uses the selected cell's accessibility label; if that label is unavailable, the test fails with an actionable error rather than relying on clipboard or coordinates.

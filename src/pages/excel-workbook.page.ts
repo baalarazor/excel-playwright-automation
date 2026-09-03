@@ -27,10 +27,30 @@ export class ExcelWorkbookPage {
   }
 
   public async readSelectedCellValue(cellReference: string): Promise<string> {
-    const accessibleValue = await this.readAccessibleCellValue(cellReference);
-    if (accessibleValue) return accessibleValue;
+    return this.waitForSelectedCellValue(
+      cellReference,
+      () => true,
+      `Excel did not expose ${cellReference}'s displayed value through accessibility.`,
+    );
+  }
 
-    throw new Error(`Excel did not expose ${cellReference}'s displayed value through accessibility.`);
+  public async waitForSelectedCellValue(
+    cellReference: string,
+    matches: (value: string) => boolean,
+    message: string,
+  ): Promise<string> {
+    let matchedValue = '';
+    await expect
+      .poll(
+        async () => {
+          matchedValue = (await this.accessibleCellValues(cellReference)).find(matches) ?? '';
+          return matchedValue;
+        },
+        { message, timeout: 10_000 },
+      )
+      .not.toBe('');
+
+    return matchedValue;
   }
 
   public async readSelectedCellFormula(): Promise<string> {
@@ -58,11 +78,7 @@ export class ExcelWorkbookPage {
 
   public async setNumberFormat(cellReference: string, formatName: string): Promise<void> {
     await this.selectCell(cellReference);
-    const numberFormat = await this.visibleLocator([
-      this.scope.getByRole('button', { name: /number format/i }).first(),
-      this.scope.locator('button[aria-label*="number format" i]').first(),
-    ]);
-    await numberFormat.click();
+    await this.openNumberFormatMenu();
 
     const format = this.scope.getByRole('option', { name: new RegExp(`^${escapeRegex(formatName)}$`, 'i') }).first();
     await expect(format, `Excel did not offer the ${formatName} number format`).toBeVisible();
@@ -70,14 +86,32 @@ export class ExcelWorkbookPage {
     await this.selectCell(cellReference);
   }
 
-  public async readNumberFormat(): Promise<string> {
-    const numberFormat = await this.visibleLocator([
-      this.scope.getByRole('combobox', { name: /number format/i }).first(),
+  public async setIsoDateFormat(cellReference: string): Promise<void> {
+    await this.selectCell(cellReference);
+    await this.openMoreNumberFormats();
+
+    const isoDate = this.scope.getByRole('row', { name: /^2012-03-14$/ }).first();
+    await expect(isoDate, 'Excel did not offer the yyyy-mm-dd date format').toBeVisible();
+    await isoDate.click();
+    await this.selectCell(cellReference);
+  }
+
+  public async setCustomNumberFormat(cellReference: string, formatCode: string): Promise<void> {
+    await this.selectCell(cellReference);
+    await this.openMoreNumberFormats();
+
+    const category = this.scope.getByRole('combobox', { name: /choose category/i }).first();
+    await category.click();
+    const custom = this.scope.getByRole('option', { name: /^custom$/i }).first();
+    await expect(custom, 'Excel did not offer the Custom number-format category').toBeVisible();
+    await custom.click();
+
+    const formatInput = await this.visibleLocator([
+      this.scope.locator('#customFormatInput').first(),
     ]);
-    return numberFormat.evaluate((element) => {
-      if (element instanceof HTMLInputElement) return element.value.trim();
-      return (element.textContent ?? '').trim();
-    });
+    await formatInput.fill(formatCode);
+    await this.scope.getByRole('button', { name: /^confirm$/i }).click();
+    await this.selectCell(cellReference);
   }
 
   private async selectCell(cellReference: string): Promise<void> {
@@ -92,36 +126,40 @@ export class ExcelWorkbookPage {
     );
   }
 
+  private async openNumberFormatMenu(): Promise<void> {
+    const numberFormat = await this.visibleLocator([
+      this.scope.getByRole('button', { name: /number format/i }).first(),
+      this.scope.locator('button[aria-label*="number format" i]').first(),
+    ]);
+    await numberFormat.click();
+  }
+
+  private async openMoreNumberFormats(): Promise<void> {
+    await this.openNumberFormatMenu();
+    const moreFormats = this.scope
+      .getByRole('option', { name: /^more number formats\.\.\.$/i })
+      .first();
+    await expect(moreFormats, 'Excel did not offer More Number Formats').toBeVisible();
+    await moreFormats.click();
+  }
+
   private async dismissBlockingDialog(): Promise<void> {
     const confirmation = this.scope.getByRole('button', { name: /^ok$/i }).first();
     if (await confirmation.isVisible().catch(() => false)) await confirmation.click();
   }
 
-  private async readAccessibleCellValue(cellReference: string): Promise<string> {
-    let value = '';
-    await expect
-      .poll(
-        async () => {
-          const cellTextboxes = this.scope.getByRole('textbox', {
-            name: new RegExp(`(?:^|\\s\\.\\s)${escapeRegex(cellReference)}(?:\\s\\.\\s|$)`, 'i'),
-          });
-          const count = await cellTextboxes.count();
-          for (let index = 0; index < count; index += 1) {
-            const label = await cellTextboxes.nth(index).getAttribute('aria-label');
-            const parsed = label ? extractCellValueFromAccessibleLabel(label, cellReference) : '';
-            if (parsed) {
-              value = parsed;
-              return value;
-            }
-          }
-          return '';
-        },
-        { timeout: 3_000 },
-      )
-      .not.toBe('')
-      .catch(() => undefined);
-
-    return value;
+  private async accessibleCellValues(cellReference: string): Promise<string[]> {
+    const cellTextboxes = this.scope.getByRole('textbox', {
+      name: new RegExp(`(?:^|\\s\\.\\s)${escapeRegex(cellReference)}(?:\\s\\.\\s|$)`, 'i'),
+    });
+    const count = await cellTextboxes.count();
+    const values: string[] = [];
+    for (let index = 0; index < count; index += 1) {
+      const label = await cellTextboxes.nth(index).getAttribute('aria-label');
+      const parsed = label ? extractCellValueFromAccessibleLabel(label, cellReference) : '';
+      if (parsed) values.push(parsed);
+    }
+    return values;
   }
 
   private nameBoxCandidates(): readonly Locator[] {

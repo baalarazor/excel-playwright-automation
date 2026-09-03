@@ -1,14 +1,12 @@
 import { expect, test } from '@playwright/test';
 
-import { loadEnvironmentFile, readRuntimeConfig } from '../../src/config/runtime-config';
+import { readRuntimeConfig } from '../../src/config/runtime-config';
 import {
   describeCalendarDate,
   matchesDisplayedDate,
   observedCalendarDates,
 } from '../../src/domain/calendar-date';
 import { ExcelWorkbookPage } from '../../src/pages/excel-workbook.page';
-
-loadEnvironmentFile();
 
 test.describe('Excel Online TODAY()', () => {
   test.describe.configure({ mode: 'serial' });
@@ -77,7 +75,46 @@ test.describe('Excel Online TODAY()', () => {
     }
   });
 
-  test('displays TODAY() using Excel\'s Short Date number format', async ({ page }) => {
+  test('displays TODAY() using the yyyy-mm-dd date format', async ({ page }) => {
+    const config = readRuntimeConfig();
+    const workbook = new ExcelWorkbookPage(page, config.workbookTimeoutMs);
+    let cellWasChanged = false;
+
+    await workbook.open(config.workbookUrl);
+    await workbook.clearCell(config.targetCell);
+    await workbook.setNumberFormat(config.targetCell, 'General');
+
+    try {
+      const startedAt = new Date();
+      cellWasChanged = true;
+      await workbook.enterFormula(config.targetCell, '=TODAY()');
+      await workbook.setIsoDateFormat(config.targetCell);
+
+      const expectedDates = observedCalendarDates(
+        startedAt,
+        new Date(),
+        config.locale,
+        config.timeZone,
+      );
+
+      const expectedIsoDates = expectedDates.map(
+        (date) =>
+          `${date.year}-${String(date.month).padStart(2, '0')}-${String(date.day).padStart(2, '0')}`,
+      );
+      await workbook.waitForSelectedCellValue(
+        config.targetCell,
+        (value) => expectedIsoDates.includes(value),
+        `Expected ${config.targetCell} to display today's date in yyyy-mm-dd format`,
+      );
+    } finally {
+      if (cellWasChanged) {
+        await workbook.clearCell(config.targetCell).catch(() => undefined);
+        await workbook.setNumberFormat(config.targetCell, 'General').catch(() => undefined);
+      }
+    }
+  });
+
+  test('displays TODAY() using the d mmm yyyy date format', async ({ page }) => {
     const config = readRuntimeConfig();
     test.skip(config.locale !== 'en-US', 'This display-pattern assertion is specific to en-US.');
     const workbook = new ExcelWorkbookPage(page, config.workbookTimeoutMs);
@@ -91,25 +128,26 @@ test.describe('Excel Online TODAY()', () => {
       const startedAt = new Date();
       cellWasChanged = true;
       await workbook.enterFormula(config.targetCell, '=TODAY()');
-      await workbook.setNumberFormat(config.targetCell, 'Short Date');
+      await workbook.setCustomNumberFormat(config.targetCell, 'd mmm yyyy');
 
-      const displayedValue = await workbook.readSelectedCellValue(config.targetCell);
-      expect(await workbook.readNumberFormat(), 'Excel should apply the Date format category').toBe(
-        'Date',
-      );
       const expectedDates = observedCalendarDates(
         startedAt,
         new Date(),
         config.locale,
         config.timeZone,
       );
+      const expectedTextDates = expectedDates.map((date) => {
+        const month = new Intl.DateTimeFormat('en-US', {
+          month: 'short',
+          timeZone: 'UTC',
+        }).format(new Date(Date.UTC(date.year, date.month - 1, date.day)));
+        return `${date.day} ${month} ${date.year}`;
+      });
 
-      expect(
-        matchesDisplayedDate(displayedValue, expectedDates, config.locale),
-        `Expected ${config.targetCell} value "${displayedValue}" to represent today's date`,
-      ).toBe(true);
-      expect(displayedValue, 'Excel Short Date should use the M/D/YYYY pattern').toMatch(
-        /^\d{1,2}\/\d{1,2}\/\d{4}$/,
+      await workbook.waitForSelectedCellValue(
+        config.targetCell,
+        (value) => expectedTextDates.includes(value),
+        `Expected ${config.targetCell} to display today's date in d mmm yyyy format`,
       );
     } finally {
       if (cellWasChanged) {

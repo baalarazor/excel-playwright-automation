@@ -16,7 +16,6 @@ test.describe('runtime configuration', () => {
     expect(config.targetCell).toBe('A2');
     expect(config.locale).toBe('en-US');
     expect(config.timeZone).toBe('UTC');
-    expect(config.actionTimeoutMs).toBe(15_000);
   });
 
   test('rejects an unsafe workbook URL', () => {

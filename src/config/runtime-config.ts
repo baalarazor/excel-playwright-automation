@@ -3,9 +3,7 @@ import path from 'node:path';
 import dotenv from 'dotenv';
 
 export interface RuntimeConfig {
-  readonly actionTimeoutMs: number;
   readonly locale: string;
-  readonly navigationTimeoutMs: number;
   readonly targetCell: string;
   readonly timeZone: string;
   readonly workbookTimeoutMs: number;
@@ -49,15 +47,7 @@ export function readRuntimeConfig(
   }
 
   return {
-    actionTimeoutMs: boundedInteger(environment, 'ACTION_TIMEOUT_MS', 15_000, 1_000, 120_000),
     locale,
-    navigationTimeoutMs: boundedInteger(
-      environment,
-      'NAVIGATION_TIMEOUT_MS',
-      60_000,
-      5_000,
-      180_000,
-    ),
     targetCell,
     timeZone,
     workbookTimeoutMs: boundedInteger(
