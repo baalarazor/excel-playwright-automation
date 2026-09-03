@@ -86,16 +86,6 @@ export class ExcelWorkbookPage {
     await this.selectCell(cellReference);
   }
 
-  public async setIsoDateFormat(cellReference: string): Promise<void> {
-    await this.selectCell(cellReference);
-    await this.openMoreNumberFormats();
-
-    const isoDate = this.scope.getByRole('row', { name: /^2012-03-14$/ }).first();
-    await expect(isoDate, 'Excel did not offer the yyyy-mm-dd date format').toBeVisible();
-    await isoDate.click();
-    await this.selectCell(cellReference);
-  }
-
   public async setCustomNumberFormat(cellReference: string, formatCode: string): Promise<void> {
     await this.selectCell(cellReference);
     await this.openMoreNumberFormats();
