@@ -29,8 +29,8 @@ npm run report      # open the HTML report
 3. Enters `=TODAY()` and verifies the formula bar.
 4. Reads A2's displayed value from Excel's accessibility label.
 5. Compares it with today's date in the configured locale and timezone, allowing a midnight boundary.
-6. In separate format tests, opens **More Number Formats** to verify the built-in `yyyy-mm-dd` format and the custom `d mmm yyyy` format (`3 Sep 2026`).
-7. Clears A2 again in `finally`.
+6. In two separate format tests, opens **More Number Formats → Custom** and verifies `yyyy-mm-dd` and `d mmm yyyy` (`3 Sep 2026`).
+7. Clears A2 and resets it to the General format in the `afterEach` hook.
 
 Excel's canvas grid is not a stable DOM source. The test therefore uses the selected cell's accessibility label; if that label is unavailable, the test fails with an actionable error rather than relying on clipboard or coordinates.
 
@@ -41,4 +41,8 @@ Excel's canvas grid is not a stable DOM source. The test therefore uses the sele
 - Locale and timezone are explicit, so the expected date does not depend on the machine location.
 - A2 is shared state; do not run this test concurrently against the same workbook.
 
-Failures retain a screenshot, trace, video, and date-verification attachment under `test-results/`.
+Failures retain a screenshot, trace, and video under `test-results/`.
+
+## Demo video
+
+https://www.loom.com/share/ba9026f1f2d2435facd010f9b5a04959
