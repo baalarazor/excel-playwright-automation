@@ -54,12 +54,6 @@ export function matchesDisplayedDate(
   );
 }
 
-export function describeCalendarDate(date: CalendarDate): string {
-  return `${date.year.toString().padStart(4, '0')}-${date.month
-    .toString()
-    .padStart(2, '0')}-${date.day.toString().padStart(2, '0')}`;
-}
-
 function dateRepresentations(
   date: CalendarDate,
   locale: string,
